@@ -59,7 +59,8 @@ dependencies {
     implementation(libs.compose.foundation)
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
-
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
 
     // NAVIGATION
     implementation(libs.androidx.navigation.fragment.ktx)
@@ -75,8 +76,6 @@ dependencies {
     // FIREBASE
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.navigation.compose.v277)
 
     // RETROFIT
     implementation(libs.retrofit)

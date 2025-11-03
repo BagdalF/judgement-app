@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "878219501631",
+    "project_id": "judgement-72003",
+    "storage_bucket": "judgement-72003.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:878219501631:android:86a9b4a8ce909f38c5d88a",
+        "android_client_info": {
+          "package_name": "com.judgement"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDidLjVZ07nNxg0lxFUlL8RCPLbIfjtOPQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
