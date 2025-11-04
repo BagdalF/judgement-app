@@ -24,6 +24,15 @@ class UsersRepository (private val usersDao: UsersDAO) {
         }
     }
 
+    suspend fun getUserByFirebaseId(fbId: String?): Flow<Users>? {
+        return try {
+            usersDao.getByFirebaseId(fbId)
+        } catch (e: Exception) {
+            Log.e("Erro ao buscar", "${e.message}")
+            null
+        }
+    }
+
     suspend fun insertUser(
         user: Users
     ) {

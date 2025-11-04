@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class Users(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+    val firebaseId: String? = null,
     val firstName: String,
     val lastName: String,
     val email: String,

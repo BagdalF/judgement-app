@@ -14,6 +14,9 @@ interface UsersDAO {
     @Query("SELECT * FROM users WHERE id = :userId")
     suspend fun getById(userId: Int): Flow<Users>
 
+    @Query("SELECT * FROM users WHERE firebaseId = :fbId")
+    suspend fun getByFirebaseId(fbId: String?): Flow<Users>
+
     @Query("DELETE FROM users WHERE id = :userId")
     suspend fun delete(userId: Int)
 

@@ -127,10 +127,23 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
         }
     }
 
-    fun onLogin(): Users? {
-        val state = _uiState.value
+//    fun onLogin(): Users? {
+//        val state = _uiState.value
+//
+//        val user = state.listaDeUsers.find { it.email == state.email && it.password == state.password }
+//
+//        return user
+//    }
 
-        val user = state.listaDeUsers.find { it.email == state.email && it.password == state.password }
+    fun onGetCurrentUser(sessionId: String): Users? {
+        var user: Users? = null
+
+        viewModelScope.launch {
+            repository.getUserByFirebaseId(sessionId)?.collect{
+                fbUser ->
+                user = fbUser
+            }
+        }
 
         return user
     }

@@ -1,4 +1,4 @@
-package com.empresa.projetofirebase.ui.screens
+package com.judgement.ui.users
 
 // ui/screens/SignUpScreen.kt
 import androidx.compose.foundation.layout.*

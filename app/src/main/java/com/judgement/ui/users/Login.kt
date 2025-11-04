@@ -26,21 +26,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.bankingapp.data.local.AppDatabase
-import com.example.bankingapp.data.local.Usuarios
-import com.example.bankingapp.data.repository.UsuariosRepository
+import com.judgement.data.local.AppDatabase
+import com.judgement.data.local.Users
+import com.judgement.data.repository.UsersRepository
 
 @Composable
 fun LoginScreen(
-    onLogin: (userCheck: Usuarios?, errorMessage: () -> Unit) -> Unit,
+    onLogin: (userFound: Users) -> Unit,
     onNavigateRegister: () -> Unit,
-    viewModel: UsuariosViewModel =
-        viewModel(factory = UsuariosViewModelFactory(
-            UsuariosRepository(AppDatabase.getDatabase(LocalContext.current).usuariosDAO())
+    usersViewModel: UsersViewModel =
+        viewModel(factory = UsersViewModelFactory(
+            UsersRepository(AppDatabase.getDatabase(LocalContext.current).usersDAO())
         )
-        )
+    ),
+    authViewModel: AuthViewModel =
+        viewModel(factory = AuthViewModelFactory())
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by usersViewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -73,7 +75,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = uiState.email,
-                onValueChange = { viewModel.onEmailChange(it) },
+                onValueChange = { usersViewModel.onEmailChange(it) },
                 label = { Text("E-mail") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -81,7 +83,7 @@ fun LoginScreen(
 
             OutlinedTextField(
                 value = uiState.password,
-                onValueChange = { viewModel.onPasswordChange(it) },
+                onValueChange = { usersViewModel.onPasswordChange(it) },
                 label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -94,7 +96,9 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { onLogin(viewModel.onLogin()) { errorMessage = "Invalid credentials." } },
+                onClick = { onLogin{
+                    authViewModel.signIn(email, password)
+                }  },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

@@ -1,4 +1,4 @@
-package com.empresa.projetofirebase.ui.screens
+package com.judgement.ui.users
 
 // ui/screens/ProfileScreen.kt
 import androidx.compose.foundation.layout.*
@@ -7,13 +7,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.empresa.projetofirebase.viewmodel.AuthViewModel
 import com.google.firebase.auth.FirebaseUser
 
 @Composable
 fun ProfileScreen(
     authViewModel: AuthViewModel,
-    user: FirebaseUser
+    user: FirebaseUser,
+    onSignOut: () -> Unit,
 ) {
     var newDisplayName by remember { mutableStateOf(user.displayName ?: "") }
 
@@ -55,6 +55,7 @@ fun ProfileScreen(
         Button(
             onClick = {
                 authViewModel.signOut()
+                onSignOut()
             },
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
             modifier = Modifier.fillMaxWidth()

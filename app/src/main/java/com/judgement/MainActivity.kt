@@ -9,13 +9,22 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import com.google.firebase.auth.auth
+import com.google.firebase.Firebase
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,35 +32,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHost
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.empresa.projetofirebase.ui.screens.SignUpScreen
-import com.empresa.projetofirebase.viewmodel.AuthViewModel
+import com.google.firebase.auth.FirebaseAuth
 import com.judgement.ui.users.LoginScreen
 import com.judgement.ui.users.ProfileScreen
 import com.judgement.ui.users.SignUpScreen
 import com.judgement.ui.users.AuthViewModel
 import com.judgement.ui.components.Header
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
+import com.judgement.data.local.Users
+import com.judgement.ui.users.EditProfileScreen
+import com.judgement.ui.users.UsersViewModel
 
-
-class BankingAppActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            AppNavigation()
-        }
-    }
-}
 
 data class Route(val name: String, val route: String, val icon: ImageVector)
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewModel: UsersViewModel) {
     val navController = rememberNavController()
     val context =   LocalContext.current
 
@@ -74,23 +77,19 @@ fun AppNavigation() {
             Header(title = "Login")
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 Column(modifier = Modifier.padding(innerPadding)) {
-                    LoginScreen (onLogin = { userCheck, errorMessage ->
+                    LoginScreen (onLogin = { userCheck ->
                         scope.launch {
-                            if (userCheck != null) {
-                                prefs.user = userCheck
-                                prefs.isLogged = true
-                                currentUser = userCheck
-                                navController.navigate("home/${userCheck.id}") {
-                                    popUpTo("login") { inclusive = true }
-                                }
-                                Toast.makeText(context, "Logged Successfully!", Toast.LENGTH_SHORT).show()
-                            } else {
-                                errorMessage()
+                            navController.navigate("home/${userCheck.id}") {
+                                popUpTo("login") { inclusive = true }
                             }
+                            Toast.makeText(context, "Logged Successfully!", Toast.LENGTH_SHORT).show()
                         }
                     }, onNavigateRegister = {
                         navController.navigate("register")
-                    })
+                    },
+                        authViewModel = authViewModel,
+                        usersViewModel = usersViewModel
+                    )
                 }
             }
         }
@@ -101,9 +100,11 @@ fun AppNavigation() {
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 Column(modifier = Modifier.padding(innerPadding)) {
                     SignUpScreen(
-                        authViewModel = AuthViewModel(),
+                        authViewModel = authViewModel,
                         onNavigateToLogin = {
-
+                            navController.navigate("login") {
+                                popUpTo("register") { inclusive = true }
+                            }
                         }
                     )
                 }
@@ -144,7 +145,8 @@ fun AppNavigation() {
                             lastSelectedItem = aux
                         }
                     )
-                    currentUser?.let { HomeScreen(it) }
+
+//                    currentUser?.let { HomeScreen(it) }
                 }
             }
         }
@@ -186,7 +188,15 @@ fun AppNavigation() {
                     )
 
                     currentUser?.let { user ->
-                        EditProfileScreen(profile = user)
+//                        ProfileScreen(
+//                            authViewModel = authViewModel,
+//                            user = auth.currentUser!!,
+//                            onSignOut = {
+//                                navController.navigate("login") {
+//                                    popUpTo(navController.graph.id) { inclusive = true }
+//                                }
+//                            }
+//                        )
                     }
                 }
             }
@@ -228,7 +238,7 @@ fun AppNavigation() {
                         }
                     )
 
-                    currentUser?.let { StatementScreen(user = it) }
+//                    currentUser?.let { StatementScreen(user = it) }
                 }
             }
         }
@@ -269,7 +279,7 @@ fun AppNavigation() {
                         }
                     )
 
-                    currentUser?.let { TransactionScreen(currentUser = it) }
+//                    currentUser?.let { TransactionScreen(currentUser = it) }
                 }
             }
         }
@@ -310,76 +320,92 @@ fun BottomNavigationBar(
 
 
 class MainActivity : ComponentActivity() {
-
     private val authViewModel: AuthViewModel by viewModels()
+    private val usersViewModel: UsersViewModel by viewModels()
+    private var currentUser : Users? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (authViewModel.uiState.value.sessionId != null) {
+            currentUser = usersViewModel.onGetCurrentUser(authViewModel.uiState.value.sessionId!!)
+        }
+
         setContent {
-            AppNavigation(authViewModel)
+            enableEdgeToEdge()
+            AppNavigation(currentUser, authViewModel, usersViewModel)
         }
     }
-
-    @Composable
-    fun AppNavigation(authViewModel: AuthViewModel = AuthViewModel()) {
-
-        val navController = rememberNavController()
-
-        val user by authViewModel.userState.collectAsStateWithLifecycle()
-        val isLoading by authViewModel.loading.collectAsStateWithLifecycle()
-        val feedbackMsg by authViewModel.authFeedback.collectAsStateWithLifecycle()
-
-
-        LaunchedEffect(feedbackMsg) {
-            feedbackMsg?.let {
-                Toast.makeText(applicationContext, it, Toast.LENGTH_SHORT).show()
-                authViewModel.clearFeedback()
-            }
-        }
-
-        NavHost(
-            navController = navController,
-            startDestination = if (user != null) "profile" else "login"
-        ){
-
-            composable("signup"){
-                SignUpScreen(
-                    authViewModel = authViewModel,
-                    onNavigateToLogin = { navController.navigate("login") }
-                )
-            }
-
-            composable("login"){
-                LoginScreen(
-                    authViewModel = authViewModel,
-                    onNavigateToSignUp = { navController.navigate("signup") }
-                )
-            }
-
-            composable("profile"){
-
-                if(user != null){
-                    ProfileScreen(
-                        authViewModel = authViewModel,
-                        user = user!!
-                    )
-                }else{
-                    LaunchedEffect(Unit) {
-                        navController.navigate("login"){
-                            popUpTo(navController.graph.id){ inclusive = true }
-                        }
-                    }
-                }
-
-            }
-
-        }
-
-        if(isLoading){
-            CircularProgressIndicator(modifier = Modifier)
-        }
-
-    }
-
 }
+
+//    @Composable
+//    fun AppNavigation(authViewModel: AuthViewModel = AuthViewModel()) {
+//        val navController = rememberNavController()
+//        val sessionId = authViewModel.uiState.collectAsState().value.sessionId
+//        val isLoading by authViewModel.loading.collectAsStateWithLifecycle()
+//        val feedbackMsg by authViewModel.authFeedback.collectAsStateWithLifecycle()
+//
+//        LaunchedEffect(feedbackMsg) {
+//            feedbackMsg?.let {
+//                Toast.makeText(applicationContext, it, Toast.LENGTH_SHORT).show()
+//                authViewModel.clearFeedback()
+//            }
+//        }
+
+//        NavHost(
+//            navController = navController,
+//            startDestination = if (currentUser != null) "profile" else "login"
+//        ) {
+//            composable("signup") {
+//                SignUpScreen(
+//                    authViewModel = authViewModel,
+//                    onNavigateToLogin = {
+//                        navController.navigate("login") {
+//                            popUpTo("signup") { inclusive = true }
+//                        }
+//                    }
+//                )
+//            }
+
+//            composable("login") {
+//                LoginScreen(
+//                    onLogin = {}
+//                    authViewModel = authViewModel,
+//                    onNavigateToSignUp = { navController.navigate("signup") }
+//                )
+//            }
+
+//            composable("profile") {
+//                if (auth.currentUser != null) {
+//                    ProfileScreen(
+//                        authViewModel = authViewModel,
+//                        user = auth.currentUser!!,
+//                        onSignOut = {
+//                            auth.signOut()
+//                            navController.navigate("login") {
+//                                popUpTo(navController.graph.id) { inclusive = true }
+//                            }
+//                        }
+//                    )
+//                } else {
+//                    LaunchedEffect(Unit) {
+//                        navController.navigate("login") {
+//                            popUpTo(navController.graph.id) { inclusive = true }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
+//        if (isLoading) {
+//            Box(
+//                modifier = Modifier.fillMaxSize(),
+//                contentAlignment = Alignment.Center
+//            ) {
+//                CircularProgressIndicator()
+//            }
+//        }
+//    }
+//
+//}
 
