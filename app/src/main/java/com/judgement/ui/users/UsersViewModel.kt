@@ -18,7 +18,8 @@ data class UsersUiState(
     val email: String = "",
     val phone: String = "",
     val password: String = "",
-    val userEmEdicao: Users? = null
+    val userEmEdicao: Users? = null,
+    val loggedUser: Users? = null
 ) {
     val textoBotao: String
         get() = if (userEmEdicao == null) "Adicionar User" else "Atualizar User"
@@ -142,6 +143,9 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
             repository.getUserByFirebaseId(sessionId)?.collect{
                 fbUser ->
                 user = fbUser
+                _uiState.update { currentState ->
+                    currentState.copy(loggedUser = user)
+                }
             }
         }
 

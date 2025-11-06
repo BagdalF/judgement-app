@@ -27,12 +27,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.judgement.data.local.AppDatabase
-import com.judgement.data.local.Users
 import com.judgement.data.repository.UsersRepository
 
 @Composable
 fun LoginScreen(
-    onLogin: (userFound: Users) -> Unit,
+    onLogin: () -> Unit,
     onNavigateRegister: () -> Unit,
     usersViewModel: UsersViewModel =
         viewModel(factory = UsersViewModelFactory(
@@ -96,9 +95,10 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { onLogin{
-                    authViewModel.signIn(email, password)
-                }  },
+                onClick = {
+                    authViewModel.signIn(email = email, senha = password, userState = usersViewModel)
+                    onLogin()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

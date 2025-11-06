@@ -22,7 +22,8 @@ class AuthViewModel : ViewModel() {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    private val _userState = MutableStateFlow(auth.currentUser)
+//    private val _userState = MutableStateFlow(auth.currentUser)
+//    private val userState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
     // feedback UI
     private val _authFeedback = MutableStateFlow<String?>(null)
@@ -33,9 +34,7 @@ class AuthViewModel : ViewModel() {
     val loading: StateFlow<Boolean> = _loading
 
     fun signUp(email: String, senha: String, nome: String){
-
         viewModelScope.launch {
-
             _loading.value = true
             _authFeedback.value = null
 
@@ -48,7 +47,6 @@ class AuthViewModel : ViewModel() {
 
                 auth.currentUser?.updateProfile(profileUpdate)?.await()
 
-                _userState.value = auth.currentUser
                 _uiState.value.sessionId = auth.currentUser?.uid
                 _authFeedback.value = "Cadastro realizado com sucesso! :) "
 
@@ -57,20 +55,18 @@ class AuthViewModel : ViewModel() {
             }finally {
                 _loading.value = false
             }
-
         }
-
     }
 
-    fun signIn(email: String, senha: String) {
+    fun signIn(email: String, senha: String, userState: UsersViewModel) {
         viewModelScope.launch {
             _loading.value = true
             _authFeedback.value = null
 
             try {
                 auth.signInWithEmailAndPassword(email, senha).await()
-                _userState.value = auth.currentUser // ERRADO
-                // MUDAR ESSE CARA DE CIMA PARA RETORNAR USER
+//                val user = userState.onGetCurrentUser(auth.currentUser?.uid!!)
+                _uiState.value.sessionId = auth.currentUser?.uid
             }catch (e: Exception){
                 _authFeedback.value = e.message ?: "Erro no login :/ "
             }finally {
@@ -79,13 +75,21 @@ class AuthViewModel : ViewModel() {
         }
     }
 
+    //    fun onLogin(): Users? {
+//        val state = _uiState.value
+//
+//        val user = state.listaDeUsers.find { it.email == state.email && it.password == state.password }
+//
+//        return user
+//    }
+
     fun updateUser(){
 
     }
 
-    fun signOut(){
+    fun signOut(userState: UsersViewModel){
         auth.signOut()
-        _userState.value = null
+        _uiState.value.sessionId = null
     }
 
     fun clearFeedback(){
