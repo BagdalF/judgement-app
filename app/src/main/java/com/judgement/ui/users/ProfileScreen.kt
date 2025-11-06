@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseUser
 @Composable
 fun ProfileScreen(
     authViewModel: AuthViewModel,
+    userViewModel: UsersViewModel,
     user: FirebaseUser,
     onSignOut: () -> Unit,
 ) {
@@ -54,7 +55,7 @@ fun ProfileScreen(
 
         Button(
             onClick = {
-                authViewModel.signOut()
+                authViewModel.signOut(userState = userViewModel)
                 onSignOut()
             },
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),

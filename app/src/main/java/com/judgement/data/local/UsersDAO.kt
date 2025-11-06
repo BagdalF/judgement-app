@@ -9,13 +9,13 @@ interface UsersDAO {
     suspend fun insert(user: Users)
 
     @Query("SELECT * FROM users")
-    suspend fun getAll(): Flow<List<Users>>
+    fun getAll(): Flow<List<Users>>
 
     @Query("SELECT * FROM users WHERE id = :userId")
-    suspend fun getById(userId: Int): Flow<Users>
+    fun getById(userId: Int): Flow<Users>
 
     @Query("SELECT * FROM users WHERE firebaseId = :fbId")
-    suspend fun getByFirebaseId(fbId: String?): Flow<Users>
+    fun getByFirebaseId(fbId: String?): Flow<Users>
 
     @Query("DELETE FROM users WHERE id = :userId")
     suspend fun delete(userId: Int)

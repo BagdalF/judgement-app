@@ -9,10 +9,10 @@ interface VerdictsDAO {
     suspend fun insert(verdict: Verdicts)
 
     @Query("SELECT * FROM verdicts")
-    suspend fun getAll(): Flow<List<Verdicts>>
+    fun getAll(): Flow<List<Verdicts>>
 
     @Query("SELECT * FROM verdicts WHERE id = :verdictId")
-    suspend fun getById(verdictId: Int): Flow<Verdicts>
+    fun getById(verdictId: Int): Flow<Verdicts>
 
     @Query("DELETE FROM verdicts WHERE id = :verdictId")
     suspend fun delete(verdictId: Int)

@@ -1,13 +1,15 @@
-package com.example.projetoretrofit
+package com.judgement
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.judgement.ui.advices.AdviceViewModel
 
 @Composable
 fun AdviceApp() {
@@ -25,7 +27,7 @@ fun AdviceApp() {
 
         Text(
             text = advice,
-            style = MaterialTheme.typography.h6,
+            style = MaterialTheme.typography.labelSmall,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(16.dp)
         )

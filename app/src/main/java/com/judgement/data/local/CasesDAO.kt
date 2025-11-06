@@ -9,10 +9,10 @@ interface CasesDAO {
     suspend fun insert(case: Cases)
 
     @Query("SELECT * FROM cases")
-    suspend fun getAll(): Flow<List<Cases>>
+    fun getAll(): Flow<List<Cases>>
 
     @Query("SELECT * FROM cases WHERE id = :caseId")
-    suspend fun getById(caseId: Int): Flow<Cases>
+    fun getById(caseId: Int): Flow<Cases>
 
     @Query("DELETE FROM cases WHERE id = :caseId")
     suspend fun delete(caseId: Int)

@@ -1,9 +1,10 @@
-package com.example.projetoretrofit
+package com.judgement.ui.advices
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.mutableStateOf
+import com.judgement.services.RetrofitInstance
 
 class AdviceViewModel : ViewModel() {
     val advice = mutableStateOf("Fetching advice...")

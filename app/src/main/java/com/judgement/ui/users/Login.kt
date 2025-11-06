@@ -15,9 +15,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -41,7 +38,7 @@ fun LoginScreen(
     authViewModel: AuthViewModel =
         viewModel(factory = AuthViewModelFactory())
 ) {
-    val uiState by usersViewModel.uiState.collectAsStateWithLifecycle()
+    val userState by usersViewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -49,10 +46,6 @@ fun LoginScreen(
             .background(Color.White)
     ) {
         Spacer(modifier = Modifier.height(24.dp))
-
-        var email by remember { mutableStateOf("") }
-        var password by remember { mutableStateOf("") }
-        var errorMessage by remember { mutableStateOf("") }
 
         Column(
             modifier = Modifier
@@ -73,7 +66,7 @@ fun LoginScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
-                value = uiState.email,
+                value = userState.email,
                 onValueChange = { usersViewModel.onEmailChange(it) },
                 label = { Text("E-mail") },
                 modifier = Modifier.fillMaxWidth(),
@@ -81,22 +74,18 @@ fun LoginScreen(
             )
 
             OutlinedTextField(
-                value = uiState.password,
+                value = userState.password,
                 onValueChange = { usersViewModel.onPasswordChange(it) },
                 label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
 
-            if (errorMessage.isNotEmpty()) {
-                Text(errorMessage, color = Color.Red, fontSize = 14.sp)
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
-                    authViewModel.signIn(email = email, senha = password, userState = usersViewModel)
+                    authViewModel.signIn(email = userState.email, senha = userState.password, userState = usersViewModel)
                     onLogin()
                 },
                 modifier = Modifier

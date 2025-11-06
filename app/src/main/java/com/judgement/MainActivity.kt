@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import com.google.firebase.auth.auth
-import com.google.firebase.Firebase
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
@@ -29,22 +27,51 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHost
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.judgement.ui.users.LoginScreen
-import com.judgement.ui.users.ProfileScreen
 import com.judgement.ui.users.SignUpScreen
 import com.judgement.ui.users.AuthViewModel
 import com.judgement.ui.components.Header
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.collectAsState
+import com.judgement.data.local.AppDatabase
 import com.judgement.data.local.Users
-import com.judgement.ui.users.EditProfileScreen
+import com.judgement.data.repository.UsersRepository
+import com.judgement.ui.users.AuthViewModelFactory
+import com.judgement.ui.users.ProfileScreen
 import com.judgement.ui.users.UsersViewModel
+import com.judgement.ui.users.UsersViewModelFactory
+
+
+class MainActivity : ComponentActivity() {
+    private val authViewModel: AuthViewModel by viewModels {
+        AuthViewModelFactory()
+    }
+    private val usersViewModel: UsersViewModel by viewModels {
+        UsersViewModelFactory(
+            UsersRepository(
+                AppDatabase.getDatabase(applicationContext).usersDAO()
+            )
+        )
+    }
+    private var currentUser : Users? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        if (authViewModel.uiState.value.sessionId != null) {
+            currentUser = usersViewModel.onGetCurrentUser(authViewModel.uiState.value.sessionId!!)
+        }
+
+        setContent {
+            enableEdgeToEdge()
+            AppNavigation(currentUser, authViewModel, usersViewModel)
+        }
+    }
+}
+
 
 
 data class Route(val name: String, val route: String, val icon: ImageVector)
@@ -75,7 +102,7 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
                 Column(modifier = Modifier.padding(innerPadding)) {
                     LoginScreen (onLogin = {
                         scope.launch {
-                            navController.navigate("home/${usersViewModel.onGetCurrentUser(authViewModel.uiState.value.sessionId!!)?.id.toString()}") {
+                            navController.navigate("home/${FirebaseAuth.getInstance().currentUser?.uid}") {
                                 popUpTo("login") { inclusive = true }
                             }
                             Toast.makeText(context, "Logged Successfully!", Toast.LENGTH_SHORT).show()
@@ -101,7 +128,8 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
                             navController.navigate("login") {
                                 popUpTo("register") { inclusive = true }
                             }
-                        }
+                        },
+                        userViewModel = usersViewModel
                     )
                 }
             }
@@ -142,7 +170,7 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
                         }
                     )
 
-//                    currentUser?.let { HomeScreen(it) }
+                    currentUser?.let { FirebaseAuth.getInstance().currentUser?.let { it1 -> ProfileScreen(authViewModel = authViewModel, userViewModel = usersViewModel, user = it1, onSignOut = {}) } }
                 }
             }
         }
@@ -183,7 +211,7 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
                         }
                     )
 
-                    currentUser?.let { user ->
+//                    currentUser?.let { user ->
 //                        ProfileScreen(
 //                            authViewModel = authViewModel,
 //                            user = auth.currentUser!!,
@@ -193,7 +221,7 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
 //                                }
 //                            }
 //                        )
-                    }
+//                    }
                 }
             }
         }
@@ -315,24 +343,7 @@ fun BottomNavigationBar(
 
 
 
-class MainActivity : ComponentActivity() {
-    private val authViewModel: AuthViewModel by viewModels()
-    private val usersViewModel: UsersViewModel by viewModels()
-    private var currentUser : Users? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        if (authViewModel.uiState.value.sessionId != null) {
-            currentUser = usersViewModel.onGetCurrentUser(authViewModel.uiState.value.sessionId!!)
-        }
-
-        setContent {
-            enableEdgeToEdge()
-            AppNavigation(currentUser, authViewModel, usersViewModel)
-        }
-    }
-}
 
 //    @Composable
 //    fun AppNavigation(authViewModel: AuthViewModel = AuthViewModel()) {

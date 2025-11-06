@@ -3,6 +3,7 @@ package com.judgement.ui.users
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuth
 import com.judgement.data.local.Users
 import com.judgement.data.repository.UsersRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,11 +14,10 @@ import kotlinx.coroutines.launch
 
 data class UsersUiState(
     val listaDeUsers: List<Users> = emptyList(),
-    val firstName: String = "",
-    val lastName: String = "",
+    val username: String = "",
     val email: String = "",
-    val phone: String = "",
     val password: String = "",
+    val isAdmin: Boolean = false,
     val userEmEdicao: Users? = null,
     val loggedUser: Users? = null
 ) {
@@ -43,35 +43,34 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
         }
     }
 
-    fun onFirstNameChange(newFirstName: String) {
-        _uiState.update { it.copy( firstName = newFirstName) }
-    }
-
-    fun onLastNameChange(newLastName: String) {
-        _uiState.update { it.copy( lastName = newLastName) }
+    fun onUsernameChange(newUsername: String) {
+        _uiState.update { it.copy( username = newUsername ) }
     }
 
     fun onEmailChange(newEmail: String) {
         _uiState.update { it.copy( email = newEmail) }
     }
 
-    fun onPhoneChange(newPhone: String) {
-        _uiState.update { it.copy( phone = newPhone) }
-    }
-
     fun onPasswordChange(newPassword: String) {
         _uiState.update { it.copy( password = newPassword) }
+    }
+
+    fun onIsAdminToggle() {
+        _uiState.update { it.copy( isAdmin = !it.isAdmin ) }
+    }
+
+    private fun onLoggedUserChange(newUser: Users) {
+        _uiState.update { it.copy( loggedUser = newUser) }
     }
 
     fun onEditar(user : Users) {
         _uiState.update {
             it.copy(
                 userEmEdicao = user,
-                firstName = user.firstName,
-                lastName = user.lastName,
+                username = user.username,
                 email = user.email,
-                phone = user.phone,
-                password = user.password
+                password = user.password,
+                isAdmin = user.isAdmin
             )
         }
     }
@@ -85,30 +84,32 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
     fun onSalvar() {
         val state = _uiState.value
 
-        if (state.firstName.isBlank() || state.lastName.isBlank() || state.email.isBlank() || state.phone.isBlank()) {
+        if (state.username.isBlank() || state.email.isBlank()) {
             return
         }
 
         val userParaSalvar = state.userEmEdicao?.
         copy(
-            firstName = state.firstName,
-            lastName = state.lastName,
+            username = state.username,
             email = state.email,
-            phone = state.phone,
-            password = state.password
+            password = state.password,
+            isAdmin = state.isAdmin,
+            firebaseId = FirebaseAuth.getInstance().currentUser?.uid
         ) ?: Users(
-            firstName = state.firstName,
-            lastName = state.lastName,
+            username = state.username,
             email = state.email,
-            phone = state.phone,
-            password = state.password
+            password = state.password,
+            isAdmin = state.isAdmin,
+            firebaseId = FirebaseAuth.getInstance().currentUser?.uid
         )
 
         viewModelScope.launch {
             if (state.userEmEdicao == null) {
                 repository.insertUser(userParaSalvar)
+                onLoggedUserChange(userParaSalvar)
             } else {
                 repository.updateUser(userParaSalvar)
+                onLoggedUserChange(userParaSalvar)
             }
         }
 
@@ -118,23 +119,13 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
     private fun limparCampos() {
         _uiState.update {
             it.copy(
-                firstName = "",
-                lastName = "",
+                username = "",
                 email = "",
-                phone = "",
                 password = "",
                 userEmEdicao = null
             )
         }
     }
-
-//    fun onLogin(): Users? {
-//        val state = _uiState.value
-//
-//        val user = state.listaDeUsers.find { it.email == state.email && it.password == state.password }
-//
-//        return user
-//    }
 
     fun onGetCurrentUser(sessionId: String): Users? {
         var user: Users? = null

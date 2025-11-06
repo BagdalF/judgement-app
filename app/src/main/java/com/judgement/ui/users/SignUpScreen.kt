@@ -8,16 +8,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.empresa.projetofirebase.viewmodel.AuthViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun SignUpScreen(
+    userViewModel: UsersViewModel,
     authViewModel: AuthViewModel,
     onNavigateToLogin: () -> Unit // Função para navegar de volta ao login
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var displayName by remember { mutableStateOf("") }
+    val userState by userViewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -28,24 +27,24 @@ fun SignUpScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = displayName,
-            onValueChange = { displayName = it },
+            value = userState.username,
+            onValueChange = { userViewModel.onUsernameChange(it) },
             label = { Text("Nome de Exibição") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
+            value = userState.email,
+            onValueChange = { userViewModel.onEmailChange(it) },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
+            value = userState.password,
+            onValueChange = { userViewModel.onPasswordChange(it) },
             label = { Text("Senha (mínimo 6 caracteres)") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth()
@@ -54,7 +53,9 @@ fun SignUpScreen(
 
         Button(
             onClick = {
-                authViewModel.signUp(email, password, displayName)
+                userViewModel.onSalvar()
+                authViewModel.signUp(userState.email, userState.password, userState.username)
+                onNavigateToLogin()
             },
             modifier = Modifier.fillMaxWidth()
         ) {
