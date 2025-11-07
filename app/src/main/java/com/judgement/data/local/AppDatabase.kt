@@ -8,7 +8,11 @@ import androidx.room.RoomDatabase
 @Database(entities = [Users::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
 
+    abstract fun casesDAO(): CasesDAO
+    abstract fun dialogsDAO(): DialogsDAO
+    abstract fun personsDAO(): PersonsDAO
     abstract fun usersDAO(): UsersDAO
+    abstract fun verdictsDAO(): VerdictsDAO
 
     companion object {
         @Volatile
