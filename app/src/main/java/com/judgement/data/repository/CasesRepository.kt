@@ -24,6 +24,15 @@ class CasesRepository(private val casesDao: CasesDAO) {
         }
     }
 
+    fun getLastCase(): Flow<Cases>? {
+        return try {
+            casesDao.getLastCase()
+        } catch (e: Exception) {
+            Log.e("Erro ao buscar", "${e.message}")
+            null
+        }
+    }
+
     suspend fun insertCase(case: Cases) {
         try {
             casesDao.insert(case)

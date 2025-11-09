@@ -14,7 +14,6 @@ import kotlinx.coroutines.launch
 
 data class CasesUiState(
     val listaDeCases: List<Cases> = emptyList(),
-    val crime: String = "",
     val caseEmEdicao: Cases? = null,
     val currentCase: Cases? = null,
     val currentDefendant: Persons? = null,
@@ -27,14 +26,11 @@ class CasesViewModel(private val repository: CasesRepository) : ViewModel() {
 
     init {
         viewModelScope.launch {
+            createRandomCase(10)
             val casesDatabase = repository.getAllCases()
 
             casesDatabase?.collect{
                 cases ->
-
-                if (cases.isEmpty()) {
-                    createRandomCase(10)
-                }
 
                 _uiState.update {
                         currentState ->
@@ -53,12 +49,16 @@ class CasesViewModel(private val repository: CasesRepository) : ViewModel() {
     fun onSalvar() {
         val state = _uiState.value
 
-        if (state.crime.isBlank()) {
-            return
-        }
-
         viewModelScope.launch {
             repository.insertCase(state.currentCase!!)
+
+            repository.getLastCase()?.collect { lastCase ->
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        currentCase = lastCase
+                    )
+                }
+            }
         }
     }
 

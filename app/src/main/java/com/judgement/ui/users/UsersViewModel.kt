@@ -21,10 +21,7 @@ data class UsersUiState(
     val isAdmin: Boolean = false,
     val userEmEdicao: Users? = null,
     val loggedUser: Users? = null
-) {
-    val textoBotao: String
-        get() = if (userEmEdicao == null) "Adicionar User" else "Atualizar User"
-}
+)
 
 
 class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
@@ -77,6 +74,7 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
     }
 
     private fun onLoggedUserChange(newUser: Users) {
+        currentUser = newUser
         _uiState.update { it.copy( loggedUser = newUser) }
     }
 
@@ -84,9 +82,9 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
         _uiState.update {
             it.copy(
                 userEmEdicao = user,
-                username = user.username,
-                email = user.email,
-                password = user.password,
+                username = _uiState.value.username,
+                email = _uiState.value.email,
+                password = _uiState.value.password,
                 isAdmin = user.isAdmin
             )
         }

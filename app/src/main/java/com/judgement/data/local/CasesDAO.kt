@@ -11,6 +11,9 @@ interface CasesDAO {
     @Query("SELECT * FROM cases")
     fun getAll(): Flow<List<Cases>>
 
+    @Query("SELECT * FROM cases ORDER BY id DESC LIMIT 1")
+    fun getLastCase(): Flow<Cases>
+
     @Query("SELECT * FROM cases WHERE id = :caseId")
     fun getById(caseId: Int): Flow<Cases>
 

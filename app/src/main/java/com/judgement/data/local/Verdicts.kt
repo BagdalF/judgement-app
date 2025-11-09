@@ -7,9 +7,9 @@ import androidx.room.PrimaryKey
 data class Verdicts(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val id_case: Int,
-    val id_user: Int,
-    val is_guilty: Boolean,
-    val prison_years: String,
-    val fine_amount: Int
+    val idCase: Int,
+    val idUser: Int,
+    val isGuilty: Boolean,
+    val prisonYears: String,
+    val fineAmount: Int
 )

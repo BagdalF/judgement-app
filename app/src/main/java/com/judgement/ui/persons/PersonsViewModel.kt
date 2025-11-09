@@ -23,11 +23,7 @@ class PersonsViewModel(private val repository: PersonsRepository) : ViewModel() 
 
     init {
         viewModelScope.launch {
-            val personsDatabase = repository.getAllPersons()
-
-            if (personsDatabase?.equals(emptyList<Persons>()) == true) {
-                fetchAPI()
-            }
+            fetchAPI()
 
             repository.getAllPersons()?.collect { persons ->
                 _uiState.update { currentState ->
@@ -40,14 +36,14 @@ class PersonsViewModel(private val repository: PersonsRepository) : ViewModel() 
     fun fetchAPI() {
         viewModelScope.launch {
             val response = RetrofitInstance.api.getPersons()
-            val randomAge = (16..100).random()
 
             for (responseAPIPerson in response) {
+                val randomAge = (16..100).random()
+
                 repository.insertPerson(
                     Persons(
-                        id = responseAPIPerson.id,
                         name = responseAPIPerson.name,
-                        address = arrayOf(responseAPIPerson.address).joinToString { it.toString() },
+                        address = "${responseAPIPerson.address.street}, ${responseAPIPerson.address.suite}, ${responseAPIPerson.address.city}",
                         phone = responseAPIPerson.phone,
                         email = responseAPIPerson.email,
                         age = randomAge

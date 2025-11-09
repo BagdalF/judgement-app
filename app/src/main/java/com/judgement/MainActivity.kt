@@ -133,13 +133,13 @@ fun AppNavigation(
 
     val scope = rememberCoroutineScope()
 
-    var selectedItem by remember { mutableIntStateOf(0) }
-    var lastSelectedItem by remember { mutableIntStateOf(0) }
+    var selectedItem by remember { mutableIntStateOf(1) }
+    var lastSelectedItem by remember { mutableIntStateOf(1) }
 
     val routes = listOf(
-        Route("Verdicts", "verdicts/${currentUser?.id}", Icons.Filled.Approval),
-        Route("Home", "home/${currentUser?.id}", Icons.Filled.Home),
-        Route("Profile", "profile/${currentUser?.id}", Icons.Filled.AccountCircle)
+        Route("Verdicts", "verdicts/", Icons.Filled.Approval),
+        Route("Home", "home/", Icons.Filled.Home),
+        Route("Profile", "profile/", Icons.Filled.AccountCircle)
     )
 
     NavHost(navController = navController, startDestination = "login") {
@@ -211,7 +211,7 @@ fun AppNavigation(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route)
+                            navController.navigate(routes[index].route + param)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -255,7 +255,7 @@ fun AppNavigation(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route)
+                            navController.navigate(routes[index].route + param)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -304,7 +304,7 @@ fun AppNavigation(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route)
+                            navController.navigate(routes[index].route + currentUser?.id)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -340,13 +340,19 @@ fun AppNavigation(
 
 
         // ========================= VERDICTS =========================
-        composable("verdicts") { backstackEntry ->
+        composable("verdicts/{id}") { backstackEntry ->
+            val param = backstackEntry.arguments?.getString("id") ?: ""
 
             LaunchedEffect(currentUser) {
                 if (currentUser == null)
                     navController.navigate("login") {
                         popUpTo("login") { inclusive = true }
                     }
+
+                if (param.isEmpty()) {
+                    navController.navigate("login") { popUpTo("login") { inclusive = true } }
+                    return@LaunchedEffect
+                }
 
                 if (!currentUser!!.isAdmin) {
                     navController.navigate("home/${currentUser!!.id}") { popUpTo("home/${currentUser!!.id}") { inclusive = true } }
@@ -361,7 +367,7 @@ fun AppNavigation(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route)
+                            navController.navigate(routes[index].route + currentUser?.id)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -405,7 +411,7 @@ fun AppNavigation(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route)
+                            navController.navigate(routes[index].route + currentUser?.id)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -453,7 +459,7 @@ fun AppNavigation(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route)
+                            navController.navigate(routes[index].route + currentUser?.id)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -501,7 +507,7 @@ fun AppNavigation(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route)
+                            navController.navigate(routes[index].route + currentUser?.id)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -533,7 +539,7 @@ fun AppNavigation(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route)
+                            navController.navigate(routes[index].route + currentUser?.id)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }

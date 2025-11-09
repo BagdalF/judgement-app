@@ -29,35 +29,54 @@ data class VerdictsUiState(
 class VerdictsViewModel(
     private val verdictsRepository: VerdictsRepository,
     private val casesRepository: CasesRepository,
-    private val personsRepository: PersonsRepository
+    personsRepository: PersonsRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(VerdictsUiState())
     val uiState: StateFlow<VerdictsUiState> = _uiState.asStateFlow()
 
+    private val casesFlow = casesRepository.getAllCases() ?: emptyFlow()
+    private val personsFlow = personsRepository.getAllPersons() ?: emptyFlow()
+    private val verdictsFlow = verdictsRepository.getAllVerdicts() ?: emptyFlow()
+
     init {
         viewModelScope.launch {
-            val verdictsFlow = verdictsRepository.getAllVerdicts()
-            val casesFlow = casesRepository.getAllCases()
-            val personsFlow = personsRepository.getAllPersons()
+            if (casesFlow.first().isNotEmpty() && verdictsFlow.first().isEmpty()) {
+                val firstCase = casesFlow.first()[0]
+                val verdict = Verdicts(
+                    idCase = firstCase.id,
+                    idUser = currentUser?.id ?: 1,
+                    isGuilty = true,
+                    prisonYears = "5",
+                    fineAmount = 10000
+                )
+                verdictsRepository.insertVerdict(verdict)
+            }
 
+            loadVerdicts()
+        }
+    }
+
+    fun loadVerdicts() {
+        viewModelScope.launch {
             combine(
-                verdictsFlow ?: emptyFlow(),
-                casesFlow ?: emptyFlow(),
-                personsFlow ?: emptyFlow()
+                verdictsFlow,
+                casesFlow,
+                personsFlow
             ) { verdicts, cases, persons ->
                 verdicts.map { verdict ->
-                    val case = cases.find { it.id == verdict.id_case }
+                    val case = cases.find { it.id == verdict.idCase }
                     val defendant = case?.let { c -> persons.find { it.id == c.idDefendant } }
                     val plaintiff = case?.let { c -> persons.find { it.id == c.idPlaintiff } }
                     VerdictWithCase(verdict, case, defendant, plaintiff)
                 }
-
             }.collect { verdictsWithCases ->
-                verdictsWithCases.filter { verdict ->
-                    return@filter (currentUser?.isAdmin == true || verdict.verdict.id_user == currentUser?.id)
+                _uiState.update {
+                    it.copy(verdictsWithCases =
+                        verdictsWithCases.filter { verdict ->
+                            currentUser?.isAdmin == true || verdict.verdict.idUser == (currentUser?.id ?: 1)
+                        }
+                    )
                 }
-
-                _uiState.update { it.copy(verdictsWithCases = verdictsWithCases) }
             }
         }
     }
@@ -74,22 +93,22 @@ class VerdictsViewModel(
         _uiState.update { it.copy(fineAmount = amount) }
     }
 
-    fun onDeletar(verdictId: Int) {
+    fun onDeletar(verdictId: Int, caseId: Int) {
         viewModelScope.launch {
             verdictsRepository.deleteVerdict(verdictId)
+            casesRepository.deleteCase(caseId)
         }
     }
 
     fun onSalvar(idCase: Int, idUser: Int, isGuilty: Boolean, prisonYears: String, fineAmount: Int) {
-        val verdictParaSalvar = Verdicts(
-            id_case = idCase,
-            id_user = idUser,
-            is_guilty = isGuilty,
-            prison_years = prisonYears,
-            fine_amount = fineAmount
-        )
-
         viewModelScope.launch {
+            val verdictParaSalvar = Verdicts(
+            idCase = idCase,
+            idUser = idUser,
+            isGuilty = isGuilty,
+            prisonYears = prisonYears,
+            fineAmount = fineAmount
+        )
             verdictsRepository.insertVerdict(verdictParaSalvar)
         }
 

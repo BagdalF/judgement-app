@@ -5,7 +5,13 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Users::class, Cases::class, Dialogs::class, Persons::class, Verdicts::class], version = 1)
+@Database(entities = [
+    Users::class,
+    Cases::class,
+    Dialogs::class,
+    Persons::class,
+    Verdicts::class
+    ], version = 4)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun casesDAO(): CasesDAO

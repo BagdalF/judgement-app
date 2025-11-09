@@ -32,6 +32,8 @@ fun VerdictsView(
 ) {
     val uiState by verdictViewModel.uiState.collectAsStateWithLifecycle()
 
+    verdictViewModel.loadVerdicts()
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -47,7 +49,12 @@ fun VerdictsView(
             items(uiState.verdictsWithCases) { verdictWithCase ->
                 VerdictCard(
                     verdictWithCase = verdictWithCase,
-                    onDelete = { verdictViewModel.onDeletar(verdictWithCase.verdict.id) }
+                    onDelete = {
+                        verdictViewModel.onDeletar(
+                            verdictWithCase.verdict.id,
+                            verdictWithCase.case?.id ?: verdictWithCase.verdict.idCase
+                        )
+                    }
                 )
             }
         }
@@ -88,10 +95,10 @@ fun VerdictCard(
             // Veredicto
             Text("Veredicto:", fontWeight = FontWeight.Bold)
             with(verdictWithCase.verdict) {
-                Text("Decisão: ${if (is_guilty) "Culpado" else "Inocente"}")
-                if (is_guilty) {
-                    Text("Pena: $prison_years anos")
-                    Text("Multa: R$ $fine_amount")
+                Text("Decisão: ${if (isGuilty) "Culpado" else "Inocente"}")
+                if (isGuilty) {
+                    Text("Pena: $prisonYears anos")
+                    Text("Multa: R$ $fineAmount")
                 }
             }
 

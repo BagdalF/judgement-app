@@ -23,6 +23,12 @@ fun ProfileView(
 ) {
     val uiState by userViewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(profile) {
+        userViewModel.onUsernameChange(profile.username)
+        userViewModel.onEmailChange(profile.email)
+        userViewModel.onPasswordChange(profile.password)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -73,7 +79,10 @@ fun ProfileView(
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { userViewModel.onEditar(profile) },
+                onClick = {
+                    userViewModel.onEditar(profile)
+                    userViewModel.onSalvar(profile.firebaseId ?: "")
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -99,7 +108,11 @@ fun ProfileView(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            DeleteAccountButton {userViewModel.onDeletar(profile.id)}
+            DeleteAccountButton {
+                userViewModel.onDeletar(profile.id)
+                authViewModel.signOut()
+                onSignOut()
+            }
         }
     }
 }
@@ -131,7 +144,7 @@ fun DeleteAccountButton(onDelete: () -> Unit) {
                 TextButton(
                     onClick = {
                         showDialog = false
-                        onDelete()  // Chama a função de exclusão real
+                        onDelete()
                     }
                 ) {
                     Text("Sim", color = Color.Red)
