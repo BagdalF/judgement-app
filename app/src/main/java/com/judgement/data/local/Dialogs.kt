@@ -7,10 +7,10 @@ import androidx.room.PrimaryKey
 data class Dialogs(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val intro_plantiff: String,
-    val intro_defendant: String,
-    val question_defendant: String,
-    val answer_defendant: String,
-    val question_plantiff: String,
-    val answer_plantiff: String
+    val introPlaintiff: String,
+    val introDefendant: String,
+    val questionDefendant: String,
+    val answerDefendant: String,
+    val questionPlaintiff: String,
+    val answerPlaintiff: String
 )

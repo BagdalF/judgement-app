@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlin.collections.emptyList
 
 data class PersonsUiState(
-    val listaDePessoas: List<Persons> = emptyList(),
+    val listaDePersons: List<Persons> = emptyList(),
 )
 
 class PersonsViewModel(private val repository: PersonsRepository) : ViewModel() {
@@ -31,7 +31,7 @@ class PersonsViewModel(private val repository: PersonsRepository) : ViewModel() 
 
             repository.getAllPersons()?.collect { persons ->
                 _uiState.update { currentState ->
-                    currentState.copy(listaDePessoas = persons)
+                    currentState.copy(listaDePersons = persons)
                 }
             }
         }

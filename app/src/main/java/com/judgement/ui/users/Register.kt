@@ -1,6 +1,6 @@
 package com.judgement.ui.users
 
-// ui/screens/SignUpScreen.kt
+// ui/views/Register.kt
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -11,10 +11,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
-fun SignUpScreen(
+fun RegisterView(
     userViewModel: UsersViewModel,
     authViewModel: AuthViewModel,
-    onNavigateToLogin: () -> Unit // Função para navegar de volta ao login
+    onNavigateLogin: () -> Unit
 ) {
     val userState by userViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -53,16 +53,15 @@ fun SignUpScreen(
 
         Button(
             onClick = {
-                userViewModel.onSalvar()
-                authViewModel.signUp(userState.email, userState.password, userState.username)
-                onNavigateToLogin()
+                authViewModel.register(userState.email, userState.password, userState.username, userViewModel = userViewModel)
+                onNavigateLogin()
             },
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Cadastrar")
         }
         Spacer(modifier = Modifier.height(8.dp))
-        TextButton(onClick = onNavigateToLogin) {
+        TextButton(onClick = onNavigateLogin) {
             Text("Já tem uma conta? Faça login")
         }
     }

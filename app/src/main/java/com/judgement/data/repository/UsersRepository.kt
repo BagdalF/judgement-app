@@ -6,7 +6,7 @@ import com.judgement.data.local.UsersDAO
 import kotlinx.coroutines.flow.Flow
 
 class UsersRepository (private val usersDao: UsersDAO) {
-    suspend fun getAllUsers(): Flow<List<Users>>? {
+    fun getAllUsers(): Flow<List<Users>>? {
         return try {
             usersDao.getAll()
         } catch (e: Exception) {
@@ -15,7 +15,7 @@ class UsersRepository (private val usersDao: UsersDAO) {
         }
     }
 
-    suspend fun getUserById(id: Int): Flow<Users>? {
+    fun getUserById(id: Int): Flow<Users>? {
         return try {
             usersDao.getById(id)
         } catch (e: Exception) {
@@ -24,7 +24,7 @@ class UsersRepository (private val usersDao: UsersDAO) {
         }
     }
 
-    suspend fun getUserByFirebaseId(fbId: String?): Flow<Users>? {
+    fun getUserByFirebaseId(fbId: String?): Flow<Users>? {
         return try {
             usersDao.getByFirebaseId(fbId)
         } catch (e: Exception) {

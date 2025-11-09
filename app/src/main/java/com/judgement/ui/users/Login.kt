@@ -27,16 +27,14 @@ import com.judgement.data.local.AppDatabase
 import com.judgement.data.repository.UsersRepository
 
 @Composable
-fun LoginScreen(
-    onLogin: () -> Unit,
+fun LoginView(
+    onLogin: (email: String, senha: String) -> Unit,
     onNavigateRegister: () -> Unit,
     usersViewModel: UsersViewModel =
         viewModel(factory = UsersViewModelFactory(
             UsersRepository(AppDatabase.getDatabase(LocalContext.current).usersDAO())
         )
-    ),
-    authViewModel: AuthViewModel =
-        viewModel(factory = AuthViewModelFactory())
+    )
 ) {
     val userState by usersViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -85,8 +83,7 @@ fun LoginScreen(
 
             Button(
                 onClick = {
-                    authViewModel.signIn(email = userState.email, senha = userState.password, userState = usersViewModel)
-                    onLogin()
+                    onLogin(userState.email, userState.password)
                 },
                 modifier = Modifier
                     .fillMaxWidth()

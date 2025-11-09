@@ -6,48 +6,75 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Approval
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.google.firebase.auth.FirebaseAuth
-import com.judgement.ui.users.LoginScreen
-import com.judgement.ui.users.SignUpScreen
+import com.judgement.ui.users.LoginView
+import com.judgement.ui.users.RegisterView
 import com.judgement.ui.users.AuthViewModel
 import com.judgement.ui.components.Header
 import kotlinx.coroutines.launch
 import com.judgement.data.local.AppDatabase
 import com.judgement.data.local.Users
+import com.judgement.data.repository.CasesRepository
+import com.judgement.data.repository.DialogsRepository
+import com.judgement.data.repository.PersonsRepository
 import com.judgement.data.repository.UsersRepository
+import com.judgement.data.repository.VerdictsRepository
+import com.judgement.ui.cases.CasesViewModel
+import com.judgement.ui.cases.CasesViewModelFactory
+import com.judgement.ui.cases.NewCaseView
+import com.judgement.ui.components.HomeView
+import com.judgement.ui.components.NavBar
+import com.judgement.ui.dialogs.DialogsView
+import com.judgement.ui.dialogs.DialogsViewModel
+import com.judgement.ui.dialogs.DialogsViewModelFactory
+import com.judgement.ui.persons.PersonsView
+import com.judgement.ui.persons.PersonsViewModel
+import com.judgement.ui.persons.PersonsViewModelFactory
+import com.judgement.ui.theme.JudgementTheme
 import com.judgement.ui.users.AuthViewModelFactory
-import com.judgement.ui.users.ProfileScreen
+import com.judgement.ui.users.ProfileView
+import com.judgement.ui.users.UsersView
 import com.judgement.ui.users.UsersViewModel
 import com.judgement.ui.users.UsersViewModelFactory
+import com.judgement.ui.verdicts.NewVerdictView
+import com.judgement.ui.verdicts.VerdictsView
+import com.judgement.ui.verdicts.VerdictsViewModel
+import com.judgement.ui.verdicts.VerdictsViewModelFactory
 
 
 class MainActivity : ComponentActivity() {
-    private val authViewModel: AuthViewModel by viewModels {
-        AuthViewModelFactory()
+    private val casesViewModel: CasesViewModel by viewModels {
+        CasesViewModelFactory(
+            CasesRepository(
+                AppDatabase.getDatabase(applicationContext).casesDAO()
+            )
+        )
+    }
+    private val dialogsViewModel: DialogsViewModel by viewModels {
+        DialogsViewModelFactory(
+            DialogsRepository(
+                AppDatabase.getDatabase(applicationContext).dialogsDAO()
+            )
+        )
+    }
+    private val personsViewModel: PersonsViewModel by viewModels {
+        PersonsViewModelFactory(
+            PersonsRepository(
+                AppDatabase.getDatabase(applicationContext).personsDAO()
+            )
+        )
     }
     private val usersViewModel: UsersViewModel by viewModels {
         UsersViewModelFactory(
@@ -56,30 +83,53 @@ class MainActivity : ComponentActivity() {
             )
         )
     }
-    private var currentUser : Users? = null
+    private val authViewModel: AuthViewModel by viewModels {
+        AuthViewModelFactory()
+    }
+    private val verdictsViewModel: VerdictsViewModel by viewModels {
+        VerdictsViewModelFactory(
+            VerdictsRepository(AppDatabase.getDatabase(applicationContext).verdictsDAO()),
+            CasesRepository(AppDatabase.getDatabase(applicationContext).casesDAO()),
+            PersonsRepository(AppDatabase.getDatabase(applicationContext).personsDAO())
+        )
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        if (authViewModel.uiState.value.sessionId != null) {
-            currentUser = usersViewModel.onGetCurrentUser(authViewModel.uiState.value.sessionId!!)
-        }
-
         setContent {
             enableEdgeToEdge()
-            AppNavigation(currentUser, authViewModel, usersViewModel)
+
+            JudgementTheme {
+                AppNavigation(
+                    casesViewModel = casesViewModel,
+                    dialogsViewModel = dialogsViewModel,
+                    personsViewModel = personsViewModel,
+                    usersViewModel =  usersViewModel,
+                    authViewModel =  authViewModel,
+                    verdictsViewModel = verdictsViewModel
+                )
+            }
         }
     }
 }
 
-
+var currentUser : Users? = null
 
 data class Route(val name: String, val route: String, val icon: ImageVector)
 
 @Composable
-fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewModel: UsersViewModel) {
+fun AppNavigation(
+    casesViewModel: CasesViewModel,
+    dialogsViewModel: DialogsViewModel,
+    personsViewModel: PersonsViewModel,
+    usersViewModel: UsersViewModel,
+    authViewModel: AuthViewModel,
+    verdictsViewModel: VerdictsViewModel
+) {
     val navController = rememberNavController()
     val context =   LocalContext.current
+
 
     val scope = rememberCoroutineScope()
 
@@ -87,10 +137,9 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
     var lastSelectedItem by remember { mutableIntStateOf(0) }
 
     val routes = listOf(
-        Route("Home", "home/", Icons.Filled.Home),
-        Route("Profile", "profile/", Icons.Filled.Person),
-        Route("Bank Statement", "statement/", Icons.Filled.Settings),
-        Route("Transaction", "transaction/", Icons.Filled.Info)
+        Route("Verdicts", "verdicts/${currentUser?.id}", Icons.Filled.Approval),
+        Route("Home", "home/${currentUser?.id}", Icons.Filled.Home),
+        Route("Profile", "profile/${currentUser?.id}", Icons.Filled.AccountCircle)
     )
 
     NavHost(navController = navController, startDestination = "login") {
@@ -100,17 +149,27 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
             Header(title = "Login")
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 Column(modifier = Modifier.padding(innerPadding)) {
-                    LoginScreen (onLogin = {
+                    LoginView (onLogin = { email, senha ->
                         scope.launch {
-                            navController.navigate("home/${FirebaseAuth.getInstance().currentUser?.uid}") {
-                                popUpTo("login") { inclusive = true }
+                            try {
+                                authViewModel.login(email = email, senha = senha, userViewModel = usersViewModel)
+                                
+                                // Only navigate if we have a current user
+                                if (currentUser != null) {
+                                    navController.navigate("home/${currentUser!!.id}") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                    Toast.makeText(context, "Logged in successfully!", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Failed to load user profile", Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(context, e.message ?: "Login failed", Toast.LENGTH_LONG).show()
                             }
-                            Toast.makeText(context, "Logged Successfully!", Toast.LENGTH_SHORT).show()
                         }
                     }, onNavigateRegister = {
                         navController.navigate("register")
                     },
-                        authViewModel = authViewModel,
                         usersViewModel = usersViewModel
                     )
                 }
@@ -122,14 +181,14 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
             Header(title = "Create Your Account")
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 Column(modifier = Modifier.padding(innerPadding)) {
-                    SignUpScreen(
+                    RegisterView(
                         authViewModel = authViewModel,
-                        onNavigateToLogin = {
+                        userViewModel = usersViewModel,
+                        onNavigateLogin = {
                             navController.navigate("login") {
                                 popUpTo("register") { inclusive = true }
                             }
-                        },
-                        userViewModel = usersViewModel
+                        }
                     )
                 }
             }
@@ -148,11 +207,11 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 bottomBar = {
-                    BottomNavigationBar(
+                    NavBar(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route + currentUser?.id.toString())
+                            navController.navigate(routes[index].route)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -160,17 +219,20 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
                 }
             ) { innerPadding ->
                 Column(modifier = Modifier.padding(innerPadding)) {
-                    Header(
-                        title = "Home",
-                        onIconClick = {
-                            navController.popBackStack()
-                            val aux = selectedItem
-                            selectedItem = lastSelectedItem
-                            lastSelectedItem = aux
-                        }
-                    )
-
-                    currentUser?.let { FirebaseAuth.getInstance().currentUser?.let { it1 -> ProfileScreen(authViewModel = authViewModel, userViewModel = usersViewModel, user = it1, onSignOut = {}) } }
+                    if (currentUser!!.isAdmin) {
+                        HomeView(
+                            currentUser = currentUser!!,
+                            onNewCase = { navController.navigate("new_case") },
+                            onManageUsers = { navController.navigate("users") },
+                            onManagePersons = { navController.navigate("persons") },
+                            onManageDialogs = { navController.navigate("dialogs") }
+                        )
+                    } else {
+                        HomeView(
+                            currentUser = currentUser!!,
+                            onNewCase = { navController.navigate("new_case") }
+                        )
+                    }
                 }
             }
         }
@@ -189,11 +251,11 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 bottomBar = {
-                    BottomNavigationBar(
+                    NavBar(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route + currentUser?.id.toString())
+                            navController.navigate(routes[index].route)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -210,29 +272,84 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
                             lastSelectedItem = aux
                         }
                     )
-
-//                    currentUser?.let { user ->
-//                        ProfileScreen(
-//                            authViewModel = authViewModel,
-//                            user = auth.currentUser!!,
-//                            onSignOut = {
-//                                navController.navigate("login") {
-//                                    popUpTo(navController.graph.id) { inclusive = true }
-//                                }
-//                            }
-//                        )
-//                    }
+                    ProfileView(
+                        profile = currentUser!!,
+                        authViewModel = authViewModel,
+                        userViewModel = usersViewModel,
+                        onSignOut = {
+                            navController.navigate("login") {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                            }
+                        }
+                    )
                 }
             }
         }
 
-        // ========================= STATEMENT =========================
-        composable("statement/{id}") { backstackEntry ->
-            val param = backstackEntry.arguments?.getString("id") ?: ""
 
-            LaunchedEffect(param) {
-                if (param.isEmpty()) {
-                    navController.navigate("login") { popUpTo("login") { inclusive = true } }
+
+        // ========================= NEW CASE =========================
+        composable("new_case") { backstackEntry ->
+            LaunchedEffect(currentUser) {
+                if (currentUser == null)
+                    navController.navigate("login") {
+                        popUpTo("login") { inclusive = true }
+                    }
+            }
+
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                bottomBar = {
+                    NavBar(
+                        routes = routes,
+                        selectedItem = selectedItem,
+                        onItemSelected = { index ->
+                            navController.navigate(routes[index].route)
+                            lastSelectedItem = selectedItem
+                            selectedItem = index
+                        }
+                    )
+                }
+            ) { innerPadding ->
+                Column(modifier = Modifier.padding(innerPadding)) {
+                    Header(
+                        title = "New Case",
+                        onIconClick = {
+                            navController.popBackStack()
+                            val aux = selectedItem
+                            selectedItem = lastSelectedItem
+                            lastSelectedItem = aux
+                        }
+                    )
+
+                    NewCaseView(
+                        caseViewModel = casesViewModel,
+                        personsViewModel = personsViewModel,
+                        onAcceptCase = { case ->
+                            casesViewModel.onSalvar()
+                            navController.navigate("new_verdict")
+                        },
+                        onRejectCase = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+        }
+
+
+
+        // ========================= VERDICTS =========================
+        composable("verdicts") { backstackEntry ->
+
+            LaunchedEffect(currentUser) {
+                if (currentUser == null)
+                    navController.navigate("login") {
+                        popUpTo("login") { inclusive = true }
+                    }
+
+                if (!currentUser!!.isAdmin) {
+                    navController.navigate("home/${currentUser!!.id}") { popUpTo("home/${currentUser!!.id}") { inclusive = true } }
                     return@LaunchedEffect
                 }
             }
@@ -240,11 +357,11 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 bottomBar = {
-                    BottomNavigationBar(
+                    NavBar(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route + currentUser?.id.toString())
+                            navController.navigate(routes[index].route)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -262,18 +379,21 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
                         }
                     )
 
-//                    currentUser?.let { StatementScreen(user = it) }
+                    VerdictsView(verdictViewModel = verdictsViewModel)
                 }
             }
         }
 
-        // ========================= TRANSACTION =========================
-        composable("transaction/{id}") { backstackEntry ->
-            val param = backstackEntry.arguments?.getString("id") ?: ""
+        // ========================= PERSONS =========================
+        composable("persons") { backstackEntry ->
+            LaunchedEffect(currentUser) {
+                    if (currentUser == null)
+                        navController.navigate("login") {
+                            popUpTo("login") { inclusive = true }
+                        }
 
-            LaunchedEffect(param) {
-                if (param.isEmpty()) {
-                    navController.navigate("login") { popUpTo("login") { inclusive = true } }
+                if (!currentUser!!.isAdmin) {
+                    navController.navigate("home/${currentUser!!.id}") { popUpTo("home/${currentUser!!.id}") { inclusive = true } }
                     return@LaunchedEffect
                 }
             }
@@ -281,11 +401,11 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
             Scaffold(
                 modifier = Modifier.fillMaxSize(),
                 bottomBar = {
-                    BottomNavigationBar(
+                    NavBar(
                         routes = routes,
                         selectedItem = selectedItem,
                         onItemSelected = { index ->
-                            navController.navigate(routes[index].route + currentUser?.id.toString())
+                            navController.navigate(routes[index].route)
                             lastSelectedItem = selectedItem
                             selectedItem = index
                         }
@@ -294,7 +414,7 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
             ) { innerPadding ->
                 Column(modifier = Modifier.padding(innerPadding)) {
                     Header(
-                        title = routes[selectedItem].name,
+                        title = "Manage Persons",
                         onIconClick = {
                             navController.popBackStack()
                             val aux = selectedItem
@@ -303,116 +423,148 @@ fun AppNavigation(currentUser: Users?, authViewModel: AuthViewModel, usersViewMo
                         }
                     )
 
-//                    currentUser?.let { TransactionScreen(currentUser = it) }
+                    PersonsView(personViewModel = personsViewModel)
                 }
             }
         }
-    }
-}
 
-@Composable
-fun BottomNavigationBar(
-    routes: List<Route>,
-    selectedItem: Int,
-    onItemSelected: (Int) -> Unit
-) {
-    NavigationBar(
-        containerColor = Color.White,
-        tonalElevation = 8.dp,
-        modifier = Modifier.height(100.dp)
-    ) {
-        routes.forEachIndexed { index, item ->
-            NavigationBarItem(
-                icon = { Icon(item.icon, contentDescription = null) },
-                label = { Text(item.name) },
-                selected = selectedItem == index,
-                onClick = { onItemSelected(index) },
-                alwaysShowLabel = true,
-                colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.White,
-                    selectedTextColor = Color.DarkGray,
-                    unselectedIconColor = Color.DarkGray,
-                    unselectedTextColor = Color.DarkGray,
-                    indicatorColor = Color(0xFF1976D2)
-                )
-            )
+        // ========================= DIALOGS =========================
+        composable("dialogs") { backstackEntry ->
+            LaunchedEffect(currentUser) {
+                    if (currentUser == null)
+                        navController.navigate("login") {
+                            popUpTo("login") { inclusive = true }
+                        }
+
+                if (!currentUser!!.isAdmin) {
+                    navController.navigate("home/${currentUser!!.id}") {
+                        popUpTo("home/${currentUser!!.id}") {
+                            inclusive = true
+                        }
+                    }
+                    return@LaunchedEffect
+                }
+            }
+
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                bottomBar = {
+                    NavBar(
+                        routes = routes,
+                        selectedItem = selectedItem,
+                        onItemSelected = { index ->
+                            navController.navigate(routes[index].route)
+                            lastSelectedItem = selectedItem
+                            selectedItem = index
+                        }
+                    )
+                }
+            ) { innerPadding ->
+                Column(modifier = Modifier.padding(innerPadding)) {
+                    Header(
+                        title = "Manage Dialogs",
+                        onIconClick = {
+                            navController.popBackStack()
+                            val aux = selectedItem
+                            selectedItem = lastSelectedItem
+                            lastSelectedItem = aux
+                        }
+                    )
+
+                    DialogsView(dialogViewModel = dialogsViewModel)
+                }
+            }
         }
+
+        // ========================= USERS =========================
+        composable("users") { backstackEntry ->
+            LaunchedEffect(currentUser) {
+                    if (currentUser == null)
+                        navController.navigate("login") {
+                            popUpTo("login") { inclusive = true }
+                        }
+
+                if (!currentUser!!.isAdmin) {
+                    navController.navigate("home/${currentUser!!.id}") {
+                        popUpTo("home/${currentUser!!.id}") {
+                            inclusive = true
+                        }
+                    }
+                    return@LaunchedEffect
+                }
+            }
+
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                bottomBar = {
+                    NavBar(
+                        routes = routes,
+                        selectedItem = selectedItem,
+                        onItemSelected = { index ->
+                            navController.navigate(routes[index].route)
+                            lastSelectedItem = selectedItem
+                            selectedItem = index
+                        }
+                    )
+                }
+            ) { innerPadding ->
+                Column(modifier = Modifier.padding(innerPadding)) {
+                    Header(
+                        title = "Manage Users",
+                        onIconClick = {
+                            navController.popBackStack()
+                            val aux = selectedItem
+                            selectedItem = lastSelectedItem
+                            lastSelectedItem = aux
+                        }
+                    )
+
+                    UsersView(userViewModel = usersViewModel)
+                }
+            }
+        }
+
+        // ========================= NEW VERDICT =========================
+        composable("new_verdict") {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                bottomBar = {
+                    NavBar(
+                        routes = routes,
+                        selectedItem = selectedItem,
+                        onItemSelected = { index ->
+                            navController.navigate(routes[index].route)
+                            lastSelectedItem = selectedItem
+                            selectedItem = index
+                        }
+                    )
+                }
+            ) { innerPadding ->
+                Column(modifier = Modifier.padding(innerPadding)) {
+                    Header(
+                        title = "Deliver Verdict",
+                        onIconClick = {
+                            navController.popBackStack()
+                            val aux = selectedItem
+                            selectedItem = lastSelectedItem
+                            lastSelectedItem = aux
+                        }
+                    )
+
+                    NewVerdictView(
+                        casesViewModel = casesViewModel,
+                        dialogsViewModel = dialogsViewModel,
+                        verdictsViewModel = verdictsViewModel,
+                        onVerdictDelivered = {
+                            casesViewModel.clearCurrentCase()
+                            navController.navigate("home/${currentUser!!.id}") {
+                                popUpTo("new_verdict") { inclusive = true }
+                            }
+                        }
+                    )
+                }
+            }
+        }
+
     }
 }
-
-
-
-
-
-
-//    @Composable
-//    fun AppNavigation(authViewModel: AuthViewModel = AuthViewModel()) {
-//        val navController = rememberNavController()
-//        val sessionId = authViewModel.uiState.collectAsState().value.sessionId
-//        val isLoading by authViewModel.loading.collectAsStateWithLifecycle()
-//        val feedbackMsg by authViewModel.authFeedback.collectAsStateWithLifecycle()
-//
-//        LaunchedEffect(feedbackMsg) {
-//            feedbackMsg?.let {
-//                Toast.makeText(applicationContext, it, Toast.LENGTH_SHORT).show()
-//                authViewModel.clearFeedback()
-//            }
-//        }
-
-//        NavHost(
-//            navController = navController,
-//            startDestination = if (currentUser != null) "profile" else "login"
-//        ) {
-//            composable("signup") {
-//                SignUpScreen(
-//                    authViewModel = authViewModel,
-//                    onNavigateToLogin = {
-//                        navController.navigate("login") {
-//                            popUpTo("signup") { inclusive = true }
-//                        }
-//                    }
-//                )
-//            }
-
-//            composable("login") {
-//                LoginScreen(
-//                    onLogin = {}
-//                    authViewModel = authViewModel,
-//                    onNavigateToSignUp = { navController.navigate("signup") }
-//                )
-//            }
-
-//            composable("profile") {
-//                if (auth.currentUser != null) {
-//                    ProfileScreen(
-//                        authViewModel = authViewModel,
-//                        user = auth.currentUser!!,
-//                        onSignOut = {
-//                            auth.signOut()
-//                            navController.navigate("login") {
-//                                popUpTo(navController.graph.id) { inclusive = true }
-//                            }
-//                        }
-//                    )
-//                } else {
-//                    LaunchedEffect(Unit) {
-//                        navController.navigate("login") {
-//                            popUpTo(navController.graph.id) { inclusive = true }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
-//        if (isLoading) {
-//            Box(
-//                modifier = Modifier.fillMaxSize(),
-//                contentAlignment = Alignment.Center
-//            ) {
-//                CircularProgressIndicator()
-//            }
-//        }
-//    }
-//
-//}
-

@@ -6,7 +6,7 @@ import com.judgement.data.local.CasesDAO
 import kotlinx.coroutines.flow.Flow
 
 class CasesRepository(private val casesDao: CasesDAO) {
-    suspend fun getAllCases(): Flow<List<Cases>>? {
+    fun getAllCases(): Flow<List<Cases>>? {
         return try {
             casesDao.getAll()
         } catch (e: Exception) {
@@ -15,7 +15,7 @@ class CasesRepository(private val casesDao: CasesDAO) {
         }
     }
 
-    suspend fun getCaseById(id: Int): Flow<Cases>? {
+    fun getCaseById(id: Int): Flow<Cases>? {
         return try {
             casesDao.getById(id)
         } catch (e: Exception) {

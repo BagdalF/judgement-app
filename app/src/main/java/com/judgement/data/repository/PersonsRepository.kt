@@ -6,7 +6,7 @@ import com.judgement.data.local.PersonsDAO
 import kotlinx.coroutines.flow.Flow
 
 class PersonsRepository(private val personsDao: PersonsDAO) {
-    suspend fun getAllPersons(): Flow<List<Persons>>? {
+    fun getAllPersons(): Flow<List<Persons>>? {
         return try {
             personsDao.getAll()
         } catch (e: Exception) {
@@ -15,7 +15,7 @@ class PersonsRepository(private val personsDao: PersonsDAO) {
         }
     }
 
-    suspend fun getPersonById(id: Int): Flow<Persons>? {
+    fun getPersonById(id: Int): Flow<Persons>? {
         return try {
             personsDao.getById(id)
         } catch (e: Exception) {

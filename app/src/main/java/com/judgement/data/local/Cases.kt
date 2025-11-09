@@ -7,8 +7,8 @@ import androidx.room.PrimaryKey
 data class Cases(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val id_defendant: Int,
-    val id_plantiff: Int,
-    val id_dialog: Int,
+    val idDefendant: Int,
+    val idPlaintiff: Int,
+    val idDialog: Int,
     val crime: String
 )

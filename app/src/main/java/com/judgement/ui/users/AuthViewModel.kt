@@ -1,5 +1,6 @@
 package com.judgement.ui.users
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -10,7 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.lang.Exception
 
 data class AuthUiState(
     var sessionId: String? = null
@@ -19,25 +19,11 @@ data class AuthUiState(
 class AuthViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
-
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-//    private val _userState = MutableStateFlow(auth.currentUser)
-//    private val userState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-    // feedback UI
-    private val _authFeedback = MutableStateFlow<String?>(null)
-    val authFeedback: StateFlow<String?> = _authFeedback
-
-    // loading
-    private val _loading = MutableStateFlow(false)
-    val loading: StateFlow<Boolean> = _loading
-
-    fun signUp(email: String, senha: String, nome: String){
+    fun register(email: String, senha: String, nome: String, userViewModel: UsersViewModel){
         viewModelScope.launch {
-            _loading.value = true
-            _authFeedback.value = null
-
             try {
                 auth.createUserWithEmailAndPassword(email, senha).await()
 
@@ -48,54 +34,53 @@ class AuthViewModel : ViewModel() {
                 auth.currentUser?.updateProfile(profileUpdate)?.await()
 
                 _uiState.value.sessionId = auth.currentUser?.uid
-                _authFeedback.value = "Cadastro realizado com sucesso! :) "
+
+                userViewModel.onSalvar(auth.currentUser!!.uid)
 
             }catch (e: Exception){
-                _authFeedback.value = e.message ?: "Erro no cadastro :/ "
-            }finally {
-                _loading.value = false
+                Log.e("AuthViewModel", "Erro no cadastro: ${e.message}")
             }
         }
     }
 
-    fun signIn(email: String, senha: String, userState: UsersViewModel) {
+    fun login(email: String, senha: String, userViewModel: UsersViewModel) {
         viewModelScope.launch {
-            _loading.value = true
-            _authFeedback.value = null
-
             try {
-                auth.signInWithEmailAndPassword(email, senha).await()
-//                val user = userState.onGetCurrentUser(auth.currentUser?.uid!!)
-                _uiState.value.sessionId = auth.currentUser?.uid
-            }catch (e: Exception){
-                _authFeedback.value = e.message ?: "Erro no login :/ "
-            }finally {
-                _loading.value = false
+                val result = auth.signInWithEmailAndPassword(email, senha).await()
+                val firebaseUser = result.user ?: throw Exception("Authentication failed")
+                _uiState.value = _uiState.value.copy(sessionId = firebaseUser.uid)
+                
+                // Tentar carregar o usuário várias vezes com delays crescentes
+                var attempts = 0
+                val maxAttempts = 5
+                while (attempts < maxAttempts) {
+                    try {
+                        userViewModel.onGetCurrentUser(firebaseUser.uid)
+                        
+                        // Esperar um pouco para ver se o usuário foi carregado
+                        kotlinx.coroutines.delay(1000L * (attempts + 1))
+                        
+                        if (userViewModel.uiState.value.loggedUser != null) {
+                            return@launch
+                        }
+                        attempts++
+                    } catch (e: Exception) {
+                        if (attempts == maxAttempts - 1) throw e
+                    }
+                }
+                throw Exception("Não foi possível carregar o perfil do usuário")
+                
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(sessionId = null)
+                throw e
             }
         }
     }
 
-    //    fun onLogin(): Users? {
-//        val state = _uiState.value
-//
-//        val user = state.listaDeUsers.find { it.email == state.email && it.password == state.password }
-//
-//        return user
-//    }
-
-    fun updateUser(){
-
-    }
-
-    fun signOut(userState: UsersViewModel){
+    fun signOut() {
         auth.signOut()
         _uiState.value.sessionId = null
     }
-
-    fun clearFeedback(){
-        _authFeedback.value = null
-    }
-
 }
 
 class AuthViewModelFactory : ViewModelProvider.Factory {

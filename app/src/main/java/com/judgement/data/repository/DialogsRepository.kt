@@ -6,7 +6,7 @@ import com.judgement.data.local.DialogsDAO
 import kotlinx.coroutines.flow.Flow
 
 class DialogsRepository(private val dialogsDao: DialogsDAO) {
-    suspend fun getAllDialogs(): Flow<List<Dialogs>>? {
+    fun getAllDialogs(): Flow<List<Dialogs>>? {
         return try {
             dialogsDao.getAll()
         } catch (e: Exception) {
@@ -15,7 +15,7 @@ class DialogsRepository(private val dialogsDao: DialogsDAO) {
         }
     }
 
-    suspend fun getDialogsById(id: Int): Flow<Dialogs>? {
+    fun getDialogsById(id: Int): Flow<Dialogs>? {
         return try {
             dialogsDao.getById(id)
         } catch (e: Exception) {
@@ -24,7 +24,7 @@ class DialogsRepository(private val dialogsDao: DialogsDAO) {
         }
     }
 
-    suspend fun insertDialogs(dialogs: Dialogs) {
+    suspend fun insertDialog(dialogs: Dialogs) {
         try {
             dialogsDao.insert(dialogs)
         } catch (e: Exception) {

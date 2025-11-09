@@ -1,9 +1,10 @@
 package com.judgement.ui.users
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
+import com.judgement.currentUser
 import com.judgement.data.local.Users
 import com.judgement.data.repository.UsersRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,8 +34,24 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            repository.getAllUsers()?.collect{
-                    users ->
+            val usersDatabase = repository.getAllUsers()
+
+            usersDatabase?.collect{
+                users ->
+
+                if (users.isEmpty()) {
+                    repository.insertUser(
+                        Users(
+                            id = 1,
+                            firebaseId = "qYQ8UPs5N3bwN7UigQoAAPjomOg1",
+                            username = "felipe",
+                            email = "felipe@gmail.com",
+                            password = "felipe",
+                            isAdmin = true
+                        )
+                    )
+                }
+
                 _uiState.update {
                         currentState ->
                     currentState.copy(listaDeUsers = users)
@@ -81,7 +98,7 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
         }
     }
 
-    fun onSalvar() {
+    fun onSalvar(firebaseId: String) {
         val state = _uiState.value
 
         if (state.username.isBlank() || state.email.isBlank()) {
@@ -94,13 +111,13 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
             email = state.email,
             password = state.password,
             isAdmin = state.isAdmin,
-            firebaseId = FirebaseAuth.getInstance().currentUser?.uid
+            firebaseId = firebaseId
         ) ?: Users(
             username = state.username,
             email = state.email,
             password = state.password,
             isAdmin = state.isAdmin,
-            firebaseId = FirebaseAuth.getInstance().currentUser?.uid
+            firebaseId = firebaseId
         )
 
         viewModelScope.launch {
@@ -127,20 +144,24 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
         }
     }
 
-    fun onGetCurrentUser(sessionId: String): Users? {
-        var user: Users? = null
-
+    fun onGetCurrentUser(sessionId: String) {
         viewModelScope.launch {
-            repository.getUserByFirebaseId(sessionId)?.collect{
-                fbUser ->
-                user = fbUser
-                _uiState.update { currentState ->
-                    currentState.copy(loggedUser = user)
+            try {
+                val user = _uiState.value.listaDeUsers.find { it.firebaseId == sessionId }
+                if (user != null) {
+                    _uiState.update { currentState ->
+                        currentState.copy(loggedUser = user)
+                    }
+                    currentUser = user
+                } else {
+                    Log.e("UsersViewModel", "User not found with Firebase ID: $sessionId")
+                    throw Exception("User profile not found")
                 }
+            } catch (e: Exception) {
+                Log.e("UsersViewModel", "Error getting user: ${e.message}")
+                throw e
             }
         }
-
-        return user
     }
 }
 

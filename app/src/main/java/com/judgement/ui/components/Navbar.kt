@@ -1,66 +1,43 @@
 package com.judgement.ui.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.judgement.Route
 
 @Composable
-fun NavBar(selectedItem: Int, onItemSelected: (Int) -> Unit) {
-
+fun NavBar(
+    routes: List<Route>,
+    selectedItem: Int,
+    onItemSelected: (Int) -> Unit
+) {
     NavigationBar(
         containerColor = Color.White,
         tonalElevation = 8.dp,
-        modifier = Modifier.height(70.dp)
+        modifier = Modifier.height(100.dp)
     ) {
-        NavigationBarItem(
-            icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
-            label = { Text("Profile") },
-            selected = selectedItem == 0,
-            onClick = { onItemSelected(0) },
-            alwaysShowLabel = true,
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.White,
-                selectedTextColor = Color.DarkGray,
-                unselectedIconColor = Color.DarkGray,
-                unselectedTextColor = Color.DarkGray,
-                indicatorColor = Color(0xB21976D2)
+        routes.forEachIndexed { index, item ->
+            NavigationBarItem(
+                icon = { Icon(item.icon, contentDescription = null) },
+                label = { Text(item.name) },
+                selected = selectedItem == index,
+                onClick = { onItemSelected(index) },
+                alwaysShowLabel = true,
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.White,
+                    selectedTextColor = Color.DarkGray,
+                    unselectedIconColor = Color.DarkGray,
+                    unselectedTextColor = Color.DarkGray,
+                    indicatorColor = Color(0xFF1976D2)
+                )
             )
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Filled.Settings, contentDescription = "Statement") },
-            label = { Text("Statement") },
-            selected = selectedItem == 1,
-            onClick = { onItemSelected(1) },
-            alwaysShowLabel = true,
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.White,
-                selectedTextColor = Color.DarkGray,
-                unselectedIconColor = Color.DarkGray,
-                unselectedTextColor = Color.DarkGray,
-                indicatorColor = Color(0xFF1976D2)
-            )
-        )
-        NavigationBarItem(
-            icon = { Icon(Icons.Filled.Info, contentDescription = "Transfers") },
-            label = { Text("Transfers") },
-            selected = selectedItem == 2,
-            onClick = { onItemSelected(2) },
-            alwaysShowLabel = true,
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = Color.White,
-                selectedTextColor = Color.DarkGray,
-                unselectedIconColor = Color.DarkGray,
-                unselectedTextColor = Color.DarkGray,
-                indicatorColor = Color(0xFF1976D2)
-            )
-        )
+        }
     }
 }

@@ -3,103 +3,94 @@ package com.judgement.ui.verdicts
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.judgement.data.local.Verdicts
-import com.judgement.data.repository.VerdictsRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import com.judgement.currentUser
+import com.judgement.data.local.*
+import com.judgement.data.repository.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-data class VerdictsUiState(
-    val listaDeVerdicts: List<Verdicts> = emptyList(),
-    val id_case: Int = 0,
-    val id_user: Int = 0,
-    val is_guilty: Boolean = false,
-    val prison_years: String = "",
-    val fine_amount: Int = 0,
-    val verdictEmEdicao: Verdicts? = null
-) {
-    val textoBotao: String
-        get() = if (verdictEmEdicao == null) "Adicionar Veredito" else "Atualizar Veredito"
-}
+data class VerdictWithCase(
+    val verdict: Verdicts,
+    val case: Cases? = null,
+    val defendant: Persons? = null,
+    val plaintiff: Persons? = null
+)
 
-class VerdictsViewModel(private val repository: VerdictsRepository) : ViewModel() {
+data class VerdictsUiState(
+    val verdictsWithCases: List<VerdictWithCase> = emptyList(),
+    val idCase: Int = 0,
+    val idUser: Int = 0,
+    val isGuilty: Boolean = false,
+    val prisonYears: String = "",
+    val fineAmount: Int = 0,
+    val verdictEmEdicao: Verdicts? = null
+)
+
+class VerdictsViewModel(
+    private val verdictsRepository: VerdictsRepository,
+    private val casesRepository: CasesRepository,
+    private val personsRepository: PersonsRepository
+) : ViewModel() {
     private val _uiState = MutableStateFlow(VerdictsUiState())
     val uiState: StateFlow<VerdictsUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
-            repository.getAllVerdicts()?.collect { verdicts ->
-                _uiState.update { currentState ->
-                    currentState.copy(listaDeVerdicts = verdicts)
+            val verdictsFlow = verdictsRepository.getAllVerdicts()
+            val casesFlow = casesRepository.getAllCases()
+            val personsFlow = personsRepository.getAllPersons()
+
+            combine(
+                verdictsFlow ?: emptyFlow(),
+                casesFlow ?: emptyFlow(),
+                personsFlow ?: emptyFlow()
+            ) { verdicts, cases, persons ->
+                verdicts.map { verdict ->
+                    val case = cases.find { it.id == verdict.id_case }
+                    val defendant = case?.let { c -> persons.find { it.id == c.idDefendant } }
+                    val plaintiff = case?.let { c -> persons.find { it.id == c.idPlaintiff } }
+                    VerdictWithCase(verdict, case, defendant, plaintiff)
                 }
+
+            }.collect { verdictsWithCases ->
+                verdictsWithCases.filter { verdict ->
+                    return@filter (currentUser?.isAdmin == true || verdict.verdict.id_user == currentUser?.id)
+                }
+
+                _uiState.update { it.copy(verdictsWithCases = verdictsWithCases) }
             }
         }
     }
 
-    fun onCaseIdChange(newId: Int) {
-        _uiState.update { it.copy(id_case = newId) }
-    }
-
-    fun onUserIdChange(newId: Int) {
-        _uiState.update { it.copy(id_user = newId) }
-    }
-
     fun onIsGuiltyChange(isGuilty: Boolean) {
-        _uiState.update { it.copy(is_guilty = isGuilty) }
+        _uiState.update { it.copy(isGuilty = isGuilty) }
     }
 
     fun onPrisonYearsChange(years: String) {
-        _uiState.update { it.copy(prison_years = years) }
+        _uiState.update { it.copy(prisonYears = years) }
     }
 
     fun onFineAmountChange(amount: Int) {
-        _uiState.update { it.copy(fine_amount = amount) }
-    }
-
-    fun onEditar(verdict: Verdicts) {
-        _uiState.update {
-            it.copy(
-                verdictEmEdicao = verdict,
-                id_case = verdict.id_case,
-                id_user = verdict.id_user,
-                is_guilty = verdict.is_guilty,
-                prison_years = verdict.prison_years,
-                fine_amount = verdict.fine_amount
-            )
-        }
+        _uiState.update { it.copy(fineAmount = amount) }
     }
 
     fun onDeletar(verdictId: Int) {
         viewModelScope.launch {
-            repository.deleteVerdict(verdictId)
+            verdictsRepository.deleteVerdict(verdictId)
         }
     }
 
-    fun onSalvar() {
-        val state = _uiState.value
-
-        val verdictParaSalvar = state.verdictEmEdicao?.copy(
-            id_case = state.id_case,
-            id_user = state.id_user,
-            is_guilty = state.is_guilty,
-            prison_years = state.prison_years,
-            fine_amount = state.fine_amount
-        ) ?: Verdicts(
-            id_case = state.id_case,
-            id_user = state.id_user,
-            is_guilty = state.is_guilty,
-            prison_years = state.prison_years,
-            fine_amount = state.fine_amount
+    fun onSalvar(idCase: Int, idUser: Int, isGuilty: Boolean, prisonYears: String, fineAmount: Int) {
+        val verdictParaSalvar = Verdicts(
+            id_case = idCase,
+            id_user = idUser,
+            is_guilty = isGuilty,
+            prison_years = prisonYears,
+            fine_amount = fineAmount
         )
 
         viewModelScope.launch {
-            if (state.verdictEmEdicao == null) {
-                repository.insertVerdict(verdictParaSalvar)
-            } else {
-                repository.updateVerdict(verdictParaSalvar)
-            }
+            verdictsRepository.insertVerdict(verdictParaSalvar)
         }
 
         limparCampos()
@@ -108,22 +99,26 @@ class VerdictsViewModel(private val repository: VerdictsRepository) : ViewModel(
     private fun limparCampos() {
         _uiState.update {
             it.copy(
-                id_case = 0,
-                id_user = 0,
-                is_guilty = false,
-                prison_years = "",
-                fine_amount = 0,
+                idCase = 0,
+                idUser = 0,
+                isGuilty = false,
+                prisonYears = "",
+                fineAmount = 0,
                 verdictEmEdicao = null
             )
         }
     }
 }
 
-class VerdictsViewModelFactory(private val repository: VerdictsRepository) : ViewModelProvider.Factory {
+class VerdictsViewModelFactory(
+    private val verdictsRepository: VerdictsRepository,
+    private val casesRepository: CasesRepository,
+    private val personsRepository: PersonsRepository
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(VerdictsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return VerdictsViewModel(repository) as T
+            return VerdictsViewModel(verdictsRepository, casesRepository, personsRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
