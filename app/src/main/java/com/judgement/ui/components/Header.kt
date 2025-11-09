@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
@@ -29,7 +28,7 @@ fun Header(
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     Surface(
-        color = Color(0xFF1976D2),
+        color = MaterialTheme.colorScheme.primary,
         shadowElevation = 4.dp
     ) {
         Row(
@@ -43,7 +42,7 @@ fun Header(
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = Color.White
+                        tint = MaterialTheme.colorScheme.onPrimary
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -52,7 +51,7 @@ fun Header(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.weight(1f)
             )
 

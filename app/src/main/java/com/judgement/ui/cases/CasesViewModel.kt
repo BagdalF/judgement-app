@@ -9,6 +9,7 @@ import com.judgement.data.repository.CasesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -26,7 +27,9 @@ class CasesViewModel(private val repository: CasesRepository) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            createRandomCase(10)
+
+            if (repository.getAllCases()?.first()?.isEmpty() == true) createRandomCase(10)
+
             val casesDatabase = repository.getAllCases()
 
             casesDatabase?.collect{

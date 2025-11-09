@@ -23,7 +23,6 @@ import com.judgement.ui.users.LoginView
 import com.judgement.ui.users.RegisterView
 import com.judgement.ui.users.AuthViewModel
 import com.judgement.ui.components.Header
-import kotlinx.coroutines.launch
 import com.judgement.data.local.AppDatabase
 import com.judgement.data.local.Users
 import com.judgement.data.repository.CasesRepository
@@ -130,9 +129,6 @@ fun AppNavigation(
     val navController = rememberNavController()
     val context =   LocalContext.current
 
-
-    val scope = rememberCoroutineScope()
-
     var selectedItem by remember { mutableIntStateOf(1) }
     var lastSelectedItem by remember { mutableIntStateOf(1) }
 
@@ -150,23 +146,20 @@ fun AppNavigation(
             Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                 Column(modifier = Modifier.padding(innerPadding)) {
                     LoginView (onLogin = { email, senha ->
-                        scope.launch {
-                            try {
-                                authViewModel.login(email = email, senha = senha, userViewModel = usersViewModel)
-                                
-                                // Only navigate if we have a current user
-                                if (currentUser != null) {
-                                    navController.navigate("home/${currentUser!!.id}") {
-                                        popUpTo("login") { inclusive = true }
-                                    }
-                                    Toast.makeText(context, "Logged in successfully!", Toast.LENGTH_SHORT).show()
-                                } else {
-                                    Toast.makeText(context, "Failed to load user profile", Toast.LENGTH_SHORT).show()
+                        try {
+                            authViewModel.login(email = email, senha = senha, userViewModel = usersViewModel)
+                            if (currentUser != null) {
+                                navController.navigate("home/${currentUser!!.id}") {
+                                    popUpTo("login") { inclusive = true }
                                 }
-                            } catch (e: Exception) {
-                                Toast.makeText(context, e.message ?: "Login failed", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "Logged in successfully!", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Failed to load user profile", Toast.LENGTH_SHORT).show()
                             }
+                        } catch (e: Exception) {
+                            Toast.makeText(context, e.message ?: "Login failed", Toast.LENGTH_LONG).show()
                         }
+
                     }, onNavigateRegister = {
                         navController.navigate("register")
                     },

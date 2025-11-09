@@ -19,8 +19,7 @@ data class UsersUiState(
     val email: String = "",
     val password: String = "",
     val isAdmin: Boolean = false,
-    val userEmEdicao: Users? = null,
-    val loggedUser: Users? = null
+    val userEmEdicao: Users? = null
 )
 
 
@@ -73,11 +72,6 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
         _uiState.update { it.copy( isAdmin = !it.isAdmin ) }
     }
 
-    private fun onLoggedUserChange(newUser: Users) {
-        currentUser = newUser
-        _uiState.update { it.copy( loggedUser = newUser) }
-    }
-
     fun onEditar(user : Users) {
         _uiState.update {
             it.copy(
@@ -121,11 +115,11 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
         viewModelScope.launch {
             if (state.userEmEdicao == null) {
                 repository.insertUser(userParaSalvar)
-                onLoggedUserChange(userParaSalvar)
             } else {
                 repository.updateUser(userParaSalvar)
-                onLoggedUserChange(userParaSalvar)
             }
+
+            currentUser = userParaSalvar
         }
 
         limparCampos()
@@ -147,9 +141,6 @@ class UsersViewModel(private val repository: UsersRepository) : ViewModel() {
             try {
                 val user = _uiState.value.listaDeUsers.find { it.firebaseId == sessionId }
                 if (user != null) {
-                    _uiState.update { currentState ->
-                        currentState.copy(loggedUser = user)
-                    }
                     currentUser = user
                 } else {
                     Log.e("UsersViewModel", "User not found with Firebase ID: $sessionId")

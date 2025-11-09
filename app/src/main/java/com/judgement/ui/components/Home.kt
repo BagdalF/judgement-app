@@ -23,7 +23,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,7 +45,7 @@ fun HomeView(
         modifier = Modifier
             .padding(16.dp)
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .background(MaterialTheme.colorScheme.background)
     ) {
 
         Text(
@@ -66,15 +65,17 @@ fun HomeView(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366))
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
         ) {
             Icon(
                 imageVector = Icons.Default.PlayArrow,
                 contentDescription = "Play Icon",
-                tint = Color.White
+                tint = MaterialTheme.colorScheme.onPrimary
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Text("Play", color = Color.White, style = MaterialTheme.typography.titleMedium)
+            Text("Play", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.titleMedium)
         }
 
         if (currentUser.isAdmin) {

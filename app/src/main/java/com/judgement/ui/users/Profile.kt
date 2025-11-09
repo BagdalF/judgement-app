@@ -2,11 +2,8 @@ package com.judgement.ui.users
 
 // ui/views/Profile.kt
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -33,22 +30,6 @@ fun ProfileView(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "Avatar",
-                tint = Color(0xFF1976D2),
-                modifier = Modifier.size(100.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Edit Profile", fontSize = 20.sp)
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         Column(
             modifier = Modifier
                 .padding(16.dp)
@@ -87,10 +68,10 @@ fun ProfileView(
                     .fillMaxWidth()
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1976D2)
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text("Save", color = Color.White, fontSize = 16.sp)
+                Text("Save", color = MaterialTheme.colorScheme.onPrimary, fontSize = 16.sp)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -100,10 +81,14 @@ fun ProfileView(
                     authViewModel.signOut()
                     onSignOut()
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                )
             ) {
-                Text("Logout")
+                Text("Logout", color = Color.White, fontSize = 16.sp)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -128,10 +113,10 @@ fun DeleteAccountButton(onDelete: () -> Unit) {
             .fillMaxWidth()
             .height(50.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Red
+            containerColor = MaterialTheme.colorScheme.error
         )
     ) {
-        Text("Excluir Conta", color = Color.White, fontSize = 16.sp)
+        Text("Excluir Conta", color = MaterialTheme.colorScheme.onError, fontSize = 16.sp)
     }
 
     // Modal de confirmação

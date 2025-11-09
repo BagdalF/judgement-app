@@ -11,12 +11,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.judgement.data.local.Persons
 
-// Adicione callbacks para integrar com NavController ou actions
 @Composable
 fun PersonsView(
     personViewModel: PersonsViewModel
@@ -51,7 +49,7 @@ fun PersonCard(
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
@@ -90,10 +88,4 @@ fun PersonCard(
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PersonsViewPreview() {
-    // Preview implementation
 }

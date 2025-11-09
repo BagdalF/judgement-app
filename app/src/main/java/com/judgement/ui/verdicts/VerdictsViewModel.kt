@@ -40,7 +40,7 @@ class VerdictsViewModel(
 
     init {
         viewModelScope.launch {
-            if (casesFlow.first().isNotEmpty() && verdictsFlow.first().isEmpty()) {
+            if (casesFlow.first().isNotEmpty() && !verdictsFlow.first().isNotEmpty()) {
                 val firstCase = casesFlow.first()[0]
                 val verdict = Verdicts(
                     idCase = firstCase.id,

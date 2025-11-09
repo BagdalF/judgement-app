@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.UserProfileChangeRequest
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,28 +49,13 @@ class AuthViewModel : ViewModel() {
             try {
                 val result = auth.signInWithEmailAndPassword(email, senha).await()
                 val firebaseUser = result.user ?: throw Exception("Authentication failed")
+                
                 _uiState.value = _uiState.value.copy(sessionId = firebaseUser.uid)
                 
-                // Tentar carregar o usuário várias vezes com delays crescentes
-                var attempts = 0
-                val maxAttempts = 5
-                while (attempts < maxAttempts) {
-                    try {
-                        userViewModel.onGetCurrentUser(firebaseUser.uid)
-                        
-                        // Esperar um pouco para ver se o usuário foi carregado
-                        kotlinx.coroutines.delay(1000L * (attempts + 1))
-                        
-                        if (userViewModel.uiState.value.loggedUser != null) {
-                            return@launch
-                        }
-                        attempts++
-                    } catch (e: Exception) {
-                        if (attempts == maxAttempts - 1) throw e
-                    }
-                }
-                throw Exception("Não foi possível carregar o perfil do usuário")
-                
+                userViewModel.onGetCurrentUser(firebaseUser.uid)
+             } catch (e: TimeoutCancellationException) {
+                _uiState.value = _uiState.value.copy(sessionId = null)
+                throw Exception("Um erro aconteceu, tente novamente", e)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(sessionId = null)
                 throw e

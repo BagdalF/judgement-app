@@ -66,7 +66,7 @@ fun NewVerdictView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFECE5DD))
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Chat messages
         LazyColumn(
@@ -118,10 +118,11 @@ fun ChatBubble(message: ChatMessage) {
         else -> Alignment.Start
     }
     
+    // Update ChatBubble colors
     val backgroundColor = when (message.senderType) {
-        SenderType.JUDGE -> Color(0xFF128C7E)
-        SenderType.PLAINTIFF -> Color(0xFF1976D2)
-        SenderType.DEFENDANT -> Color(0xFFE53935)
+        SenderType.JUDGE -> MaterialTheme.colorScheme.primary
+        SenderType.PLAINTIFF -> MaterialTheme.colorScheme.secondary
+        SenderType.DEFENDANT -> MaterialTheme.colorScheme.error
     }
 
     Column(
@@ -131,7 +132,7 @@ fun ChatBubble(message: ChatMessage) {
         Text(
             text = message.sender,
             fontSize = 12.sp,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
         
@@ -176,7 +177,7 @@ fun VerdictDialog(
                     Button(
                         onClick = { verdictsViewModel.onIsGuiltyChange(false) },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (!verdictState.isGuilty) Color.Green else Color.Gray
+                            containerColor = if (!verdictState.isGuilty) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
                         )
                     ) {
                         Text("Innocent")
@@ -184,7 +185,7 @@ fun VerdictDialog(
                     Button(
                         onClick = { verdictsViewModel.onIsGuiltyChange(true) },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (verdictState.isGuilty) Color.Red else Color.Gray
+                            containerColor = if (verdictState.isGuilty) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.surfaceVariant
                         )
                     ) {
                         Text("Guilty")
